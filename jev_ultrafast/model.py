@@ -36,6 +36,14 @@ def post_json(url, key, body):
 def validate_choice(answer, ids):
     try:
         probabilities = answer["probabilities"]
+        # kev-0.6b on out-of-domain pages sometimes returns a head whose
+        # probabilities sum to 0.97-0.99 (imperfect normalization over many
+        # candidates). Renormalize before validating instead of rejecting.
+        total = sum(probabilities.values())
+        if isinstance(total, (int, float)) and math.isfinite(total) and total > 0 and set(probabilities) == set(ids):
+            if abs(total - 1) > 1e-9:
+                probabilities = {k: v / total for k, v in probabilities.items()}
+                answer = {**answer, "probabilities": probabilities}
         numbers = [*probabilities.values(), answer["confidence"]]
         valid = (
             answer["choice"] in ids
