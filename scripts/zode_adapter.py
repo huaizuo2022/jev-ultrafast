@@ -13,6 +13,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 
 ZODE_BASE = os.environ.get("ZODE_BASE_URL", "https://zode.qa.qima-inc.com/api/proxy/forward")
 ZODE_KEY = os.environ.get("ZODE_API_KEY", "zode_daa9a98d90c2c6e74b9da376ccc9263f")
+ZODE_VERIFY_TLS = os.environ.get("ZODE_VERIFY_TLS", "0") == "1"  # internal endpoint; curl trusts system CA but python often misses it
 PORT = int(os.environ.get("ZODE_ADAPTER_PORT", "18780"))
 
 
@@ -20,7 +21,7 @@ def complete(body):
     """Call zode's SSE-only endpoint and assemble a non-streaming response."""
     upstream = {**body, "stream": True}
     content_parts, reasoning_parts, model_id, usage, finish_reason = [], [], None, {}, None
-    with httpx.Client(http2=True, timeout=60) as client:
+    with httpx.Client(http2=True, timeout=60, verify=ZODE_VERIFY_TLS) as client:
         with client.stream(
             "POST",
             f"{ZODE_BASE}/chat/completions",
