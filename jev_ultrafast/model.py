@@ -10,12 +10,18 @@ import httpx
 from .questions import NEXT_ACTION, TARGET, TEXT_VALUE
 
 CLIENT = httpx.Client(http2=True, timeout=25)
+# Local System One servers (kev, other self-hosted) must bypass any system HTTP proxy
+# (e.g. Clash on macOS), which otherwise returns 502 for loopback ports it doesn't know.
+# Local models can also be slower than hosted Jev on large action spaces, so allow a
+# generous timeout (env-overridable) instead of the hosted 25s default.
+LOCAL_CLIENT = httpx.Client(http2=True, timeout=float(os.environ.get("TYPESAFE_TIMEOUT_S", "300")), trust_env=False)
 
 
 def post_json(url, key, body):
+    client = LOCAL_CLIENT if url.startswith(("http://127.0.0.1", "http://localhost", "http://[::1]")) else CLIENT
     for attempt in range(3):
         try:
-            response = CLIENT.post(url, json=body, headers={"Authorization": f"Bearer {key}"})
+            response = client.post(url, json=body, headers={"Authorization": f"Bearer {key}"})
         except httpx.HTTPError:
             raise RuntimeError("Model connection failed; no action executed.") from None
         if response.status_code in {429, 529, 503} and attempt < 2:
