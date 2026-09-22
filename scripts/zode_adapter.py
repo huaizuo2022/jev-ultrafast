@@ -7,13 +7,14 @@ import json
 import os
 import time
 import uuid
+from http.server import BaseHTTPRequestHandler, HTTPServer
 
 import httpx
-from http.server import BaseHTTPRequestHandler, HTTPServer
 
 ZODE_BASE = os.environ.get("ZODE_BASE_URL", "https://zode.qa.qima-inc.com/api/proxy/forward")
 ZODE_KEY = os.environ.get("ZODE_API_KEY", "zode_daa9a98d90c2c6e74b9da376ccc9263f")
-ZODE_VERIFY_TLS = os.environ.get("ZODE_VERIFY_TLS", "0") == "1"  # internal endpoint; curl trusts system CA but python often misses it
+# Internal endpoint: curl trusts the system CA but python often does not.
+ZODE_VERIFY_TLS = os.environ.get("ZODE_VERIFY_TLS", "0") == "1"
 PORT = int(os.environ.get("ZODE_ADAPTER_PORT", "18780"))
 
 

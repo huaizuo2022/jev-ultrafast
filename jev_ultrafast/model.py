@@ -135,6 +135,13 @@ def choose(state, goal, history):
         os.environ["TYPESAFE_API_KEY"],
         body,
     )
+    if "answers" not in result:
+        # A provider that reports a failure instead of answers would otherwise surface as
+        # an opaque KeyError from the line below, hiding the reason the decision was lost.
+        raise RuntimeError(
+            "Model provider returned no answers; no action executed. "
+            + str(result.get("error", {}).get("message", result))[:200]
+        )
     operation_answer = validate_choice(result["answers"].get("operation", {}), operations)
     operation = operation_answer["choice"]
     target = None
