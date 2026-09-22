@@ -6,5 +6,6 @@ __pycache__/
 .DS_Store
 artifacts/
 *.egg-info/
+scripts/systemone-llm.jsonl
 
 dist/
